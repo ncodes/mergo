@@ -92,11 +92,22 @@ func deepMerge(dstIn, src reflect.Value, visited map[uintptr]*visit, depth int, 
 		}
 	}
 
+	// Skip strict type check when dst and src have
+	// int or float as their underlying type.
+	switch dst.Kind() {
+	case reflect.Int, reflect.Uint, reflect.Int64, reflect.Uint64, reflect.Float64:
+		switch src.Kind() {
+		case reflect.Int, reflect.Uint, reflect.Int64, reflect.Uint64, reflect.Float64:
+			goto do_merge
+		}
+	}
+
 	if dst.IsValid() && src.IsValid() && src.Type() != dst.Type() {
 		err = fmt.Errorf("cannot append two different types (%s, %s)", src.Kind(), dst.Kind())
 		return
 	}
 
+do_merge:
 	switch dst.Kind() {
 	case reflect.Struct:
 		if hasExportedField(dst) {
